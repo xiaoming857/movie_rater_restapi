@@ -14,8 +14,8 @@ var db *sql.DB
 
 // Database setting
 const (
-	dbUser     = "arvin"
-	dbPassword = "Qw3rtyu!0p"
+	dbUser     = "test"
+	dbPassword = "test@1234"
 	dbName     = "movie_rater"
 )
 

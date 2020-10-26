@@ -7,6 +7,9 @@
 
 ### MySQL Setup
 ```mysql
+# Create User
+CREATE USER 'test'@'localhost' IDENTIFIED BY 'test@1234';
+
 # Create movie_rater Database
 CREATE DATABASE movie_rater;
 USE movie_rater;
