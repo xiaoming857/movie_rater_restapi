@@ -8,7 +8,7 @@
 ### MySQL Setup
 ```mysql
 # Create User
-CREATE USER 'test'@'localhost' IDENTIFIED BY 'test@1234';
+CREATE USER 'test'@'localhost' IDENTIFIED BY 'Test@1234';
 
 # Create movie_rater Database
 CREATE DATABASE movie_rater;
@@ -19,6 +19,7 @@ CREATE TABLE movies(
 	id INTEGER UNSIGNED AUTO_INCREMENT,
    	title VARCHAR(75) NOT NULL,
     avgRating DECIMAL(2,1) NOT NULL DEFAULT 0.0 CHECK(avgRating BETWEEN 0.0 AND 5.0),
+    raterNum INTEGER UNSIGNED NOT NULL DEFAULT 0,
     CONSTRAINT id_pk PRIMARY KEY(id)
 );
 
@@ -27,14 +28,15 @@ CREATE TABLE users(
     id INTEGER UNSIGNED AUTO_INCREMENT,
     username VARCHAR(15) NOT NULL,
     email VARCHAR(35) NOT NULL,
+    password VARCHAR(100) NOT NULL,
     CONSTRAINT id_pk PRIMARY KEY(id)
 );
 
 # reviews Table
 CREATE TABLE reviews(
 	id INTEGER UNSIGNED AUTO_INCREMENT,
-    rating DECIMAL(2,1) NOT NULL DEFAULT 0.0 CHECK(rating BETWEEN 0.0 AND 5.0)
-    comment VARCHAR(500)
+    rating DECIMAL(2,1) NOT NULL DEFAULT 0.0 CHECK(rating BETWEEN 0.0 AND 5.0),
+    comment VARCHAR(500),
     movieId INTEGER UNSIGNED NOT NULL,
     userId INTEGER UNSIGNED NOT NULL,
     CONSTRAINT id_pk PRIMARY KEY(id),
