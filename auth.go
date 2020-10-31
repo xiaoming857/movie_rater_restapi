@@ -13,6 +13,8 @@ import (
 
 var secretKey = []byte("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
 
+var refreshKey = []byte("Quisque sagittis purus sit amet volutpat consequat. Duis at consectetur lorem donec massa. Diam vel quam elementum pulvinar etiam.")
+
 // RegisterData struct
 type RegisterData struct {
 	Username string `json:"username"`
@@ -38,15 +40,34 @@ func compareHashAndPassword(password, hash string) bool {
 	return err == nil
 }
 
-// GenerateJWT generates Token
-func generateJWT(id int, username string, email string) (string, error) {
+//GenerateRefreshToken generates refresh token
+func generateRefreshToken(id int, username string, email string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
 	claims["id"] = id
 	claims["username"] = username
 	claims["email"] = email
-	claims["exp"] = time.Now().Add(time.Hour + 24).Unix() // A day
+	claims["exp"] = time.Now().Add(time.Hour * 24 * 7).Unix() // A Week
+
+	tokenString, err := token.SignedString(refreshKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+// GenerateJWTToken generates Token
+func generateJWTToken(id int, username string, email string) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+
+	claims["id"] = id
+	claims["username"] = username
+	claims["email"] = email
+	claims["exp"] = time.Now().Add(time.Minute * 5).Unix() // 5 Minutes
 
 	tokenString, err := token.SignedString(secretKey)
 
@@ -57,15 +78,58 @@ func generateJWT(id int, username string, email string) (string, error) {
 	return tokenString, nil
 }
 
-// Protected protects routes
-func Protected() func(*fiber.Ctx) error {
+// RefreshProtected protects routes
+func RefreshProtected() func(*fiber.Ctx) error {
+	return jwtware.New(jwtware.Config{
+		SigningKey: refreshKey,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			return ctx.Status(401).JSON(map[string]string{
+				"error": "Unauthorized",
+			})
+		},
+	})
+}
+
+// AccessProtected protects routes
+func AccessProtected() func(*fiber.Ctx) error {
 	return jwtware.New(jwtware.Config{
 		SigningKey: secretKey,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
-			ctx.Status(401)
-			return ctx.JSON(map[string]string{
+			return ctx.Status(401).JSON(map[string]string{
 				"error": "Unauthorized",
 			})
+		},
+	})
+}
+
+// Refresh checks for authorization
+func Refresh(ctx *fiber.Ctx) error {
+	user := ctx.Locals("user").(*jwt.Token)
+	if !user.Valid {
+		return ctx.Status(400).JSON(map[string]string{
+			"error": "Invalid token",
+		})
+	}
+
+	claims := user.Claims.(jwt.MapClaims)
+	userID := claims["id"].(float64)
+	username := claims["username"].(string)
+	userEmail := claims["email"].(string)
+
+	jwtTokenString, err := generateJWTToken(int(userID), username, userEmail)
+	if err != nil {
+		log.Println(err.Error())
+		return ctx.SendStatus(500)
+	}
+
+	return ctx.Status(200).JSON(map[string]map[string]string{
+		"token": {
+			"jwt":     jwtTokenString,
+			"refresh": user.Raw,
+		},
+		"user": {
+			"username": username,
+			"email":    userEmail,
 		},
 	})
 }
@@ -123,14 +187,28 @@ func Login(ctx *fiber.Ctx) error {
 	}
 
 	// Create JWT token
-	tokenString, err := generateJWT(userID, username, userEmail)
+	jwtTokenString, err := generateJWTToken(userID, username, userEmail)
 	if err != nil {
 		log.Println(err.Error())
 		return ctx.SendStatus(500)
 	}
 
-	return ctx.Status(200).JSON(map[string]string{
-		"token": tokenString,
+	refreshTokenString, err := generateRefreshToken(userID, username, userEmail)
+	if err != nil {
+		log.Println(err.Error())
+		return ctx.SendStatus(500)
+	}
+
+	return ctx.Status(200).JSON(map[string]map[string]string{
+		"token": {
+			"jwt":     jwtTokenString,
+			"refresh": refreshTokenString,
+		},
+
+		"user": {
+			"username": username,
+			"email":    userEmail,
+		},
 	})
 }
 
@@ -172,8 +250,12 @@ func Register(ctx *fiber.Ctx) error {
 
 	// Check if username exist
 	result, err := db.Query("SELECT id FROM users WHERE username = ?", registerData.Username)
-	if result.Next() {
+	if err != nil {
 		log.Println(err.Error())
+		return ctx.Status(500).JSON(map[string]string{
+			"error": "Internal server error",
+		})
+	} else if result.Next() {
 		return ctx.Status(409).JSON(map[string]string{
 			"error": "Username already exist",
 		})
@@ -181,8 +263,12 @@ func Register(ctx *fiber.Ctx) error {
 
 	// Check if email has been used
 	result, err = db.Query("SELECT id FROM users WHERE email = ?", registerData.Email)
-	if result.Next() {
+	if err != nil {
 		log.Println(err.Error())
+		return ctx.Status(500).JSON(map[string]string{
+			"error": "Internal server error",
+		})
+	} else if result.Next() {
 		return ctx.Status(409).JSON(map[string]string{
 			"error": "Email has been used",
 		})
@@ -225,13 +311,27 @@ func Register(ctx *fiber.Ctx) error {
 	}
 
 	// Create JWT token
-	tokenString, err := generateJWT(userID, registerData.Username, registerData.Email)
+	jwtTokenString, err := generateJWTToken(userID, registerData.Username, registerData.Email)
 	if err != nil {
 		log.Println(err.Error())
 		return ctx.SendStatus(500)
 	}
 
-	return ctx.Status(200).JSON(map[string]string{
-		"token": tokenString,
+	refreshTokenString, err := generateRefreshToken(userID, registerData.Username, registerData.Email)
+	if err != nil {
+		log.Println(err.Error())
+		return ctx.SendStatus(500)
+	}
+
+	return ctx.Status(200).JSON(map[string]map[string]string{
+		"token": {
+			"jwt":     jwtTokenString,
+			"refresh": refreshTokenString,
+		},
+
+		"user": {
+			"username": registerData.Username,
+			"email":    registerData.Email,
+		},
 	})
 }

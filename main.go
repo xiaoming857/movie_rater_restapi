@@ -15,7 +15,7 @@ var db *sql.DB
 // Database setting
 const (
 	dbUser     = "test"
-	dbPassword = "test@1234"
+	dbPassword = "Test@1234"
 	dbName     = "movie_rater"
 )
 
@@ -46,10 +46,14 @@ func setupRoutes(app *fiber.App) {
 	app.Post("/register", Register)
 
 	// Restricted routes
-	app.Get("/movies", Protected(), GetMovies)
-	app.Get("/reviews/:id", Protected(), GetReviews)
-	app.Post("/movie", Protected(), AddMovie)
-	app.Post("/review/:id", Protected(), AddReview)
+	app.Use("/refresh", RefreshProtected())
+	app.Get("/refresh", Refresh)
+
+	app.Use(AccessProtected())
+	app.Get("/movies", GetMovies)
+	app.Get("/reviews/:id", GetReviews)
+	app.Post("/movie", AddMovie)
+	app.Post("/review/:id", AddReview)
 }
 
 func main() {

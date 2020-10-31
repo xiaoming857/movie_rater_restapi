@@ -18,7 +18,7 @@ type Movie struct {
 // Review struct
 type Review struct {
 	ID       int
-	Rating   float64
+	Rating   int
 	Comment  string
 	Username string
 }
@@ -30,8 +30,8 @@ type NewMovie struct {
 
 // NewReview struct
 type NewReview struct {
-	Rating  float64 `json:"rating"`
-	Comment string  `json:"comment"`
+	Rating  int    `json:"rating"`
+	Comment string `json:"comment"`
 }
 
 // Home shows message
@@ -128,8 +128,8 @@ func AddMovie(ctx *fiber.Ctx) error {
 // AddReview adds a new review to database
 func AddReview(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(*jwt.Token)
-	claim := user.Claims.(jwt.MapClaims)
-	userID := claim["id"].(float64)
+	claims := user.Claims.(jwt.MapClaims)
+	userID := claims["id"].(float64)
 	movieID := ctx.Params("id")
 	newReview := new(NewReview)
 	if err := ctx.BodyParser(newReview); err != nil {
@@ -190,7 +190,7 @@ func AddReview(ctx *fiber.Ctx) error {
 	}
 
 	// Insert new review to database
-	_, err = db.Exec("INSERT INTO reviews (rating, comment, movieId, userId) VALUES (?, ?, ?, ?);", newReview.Rating, newReview.Comment, movieID, userID)
+	_, err = db.Exec("INSERT INTO reviews (rating, comment, movieId, userId) VALUES (?, ?, ?, ?);", newReview.Rating, newReview.Comment, movieID, int(userID))
 	if err != nil {
 		log.Println(err.Error())
 		return ctx.Status(500).JSON(map[string]string{
