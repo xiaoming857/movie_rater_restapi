@@ -48,7 +48,7 @@ func generateRefreshToken(id int, username string, email string) (string, error)
 	claims["id"] = id
 	claims["username"] = username
 	claims["email"] = email
-	claims["exp"] = time.Now().Add(time.Hour * 24 * 7).Unix() // A Week
+	claims["exp"] = time.Now().Add(time.Hour * 24 * 7 * 4).Unix() // A Month
 
 	tokenString, err := token.SignedString(refreshKey)
 
@@ -59,8 +59,8 @@ func generateRefreshToken(id int, username string, email string) (string, error)
 	return tokenString, nil
 }
 
-// GenerateJWTToken generates Token
-func generateJWTToken(id int, username string, email string) (string, error) {
+// GenerateAccessToken generates Token
+func generateAccessToken(id int, username string, email string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
@@ -105,32 +105,26 @@ func AccessProtected() func(*fiber.Ctx) error {
 // Refresh checks for authorization
 func Refresh(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(*jwt.Token)
-	if !user.Valid {
-		return ctx.Status(400).JSON(map[string]string{
-			"error": "Invalid token",
-		})
-	}
-
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["id"].(float64)
 	username := claims["username"].(string)
 	userEmail := claims["email"].(string)
 
-	jwtTokenString, err := generateJWTToken(int(userID), username, userEmail)
+	accessTokenString, err := generateAccessToken(int(userID), username, userEmail)
 	if err != nil {
 		log.Println(err.Error())
 		return ctx.SendStatus(500)
 	}
 
-	return ctx.Status(200).JSON(map[string]map[string]string{
-		"token": {
-			"jwt":     jwtTokenString,
-			"refresh": user.Raw,
-		},
-		"user": {
-			"username": username,
-			"email":    userEmail,
-		},
+	refreshTokenString, err := generateRefreshToken(int(userID), username, userEmail)
+	if err != nil {
+		log.Println(err.Error())
+		return ctx.SendStatus(500)
+	}
+
+	return ctx.Status(200).JSON(map[string]string{
+		"accessToken":  accessTokenString,
+		"refreshToken": refreshTokenString,
 	})
 }
 
@@ -186,8 +180,8 @@ func Login(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// Create JWT token
-	jwtTokenString, err := generateJWTToken(userID, username, userEmail)
+	// Create access token
+	accessTokenString, err := generateAccessToken(userID, username, userEmail)
 	if err != nil {
 		log.Println(err.Error())
 		return ctx.SendStatus(500)
@@ -199,16 +193,11 @@ func Login(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(500)
 	}
 
-	return ctx.Status(200).JSON(map[string]map[string]string{
-		"token": {
-			"jwt":     jwtTokenString,
-			"refresh": refreshTokenString,
-		},
-
-		"user": {
-			"username": username,
-			"email":    userEmail,
-		},
+	return ctx.Status(200).JSON(map[string]string{
+		"accessToken":  accessTokenString,
+		"refreshToken": refreshTokenString,
+		"username":     username,
+		"email":        userEmail,
 	})
 }
 
@@ -228,7 +217,7 @@ func Register(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(map[string]string{
 			"error": "Empty email",
 		})
-	} else if regex, _ := regexp.Compile("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$"); !regex.MatchString(registerData.Email) {
+	} else if regex, _ := regexp.Compile(`\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b`); !regex.MatchString(registerData.Email) {
 		return ctx.Status(400).JSON(map[string]string{
 			"error": "Invalid email format",
 		})
@@ -310,8 +299,8 @@ func Register(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// Create JWT token
-	jwtTokenString, err := generateJWTToken(userID, registerData.Username, registerData.Email)
+	// Create access token
+	accessTokenString, err := generateAccessToken(userID, registerData.Username, registerData.Email)
 	if err != nil {
 		log.Println(err.Error())
 		return ctx.SendStatus(500)
@@ -323,15 +312,10 @@ func Register(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(500)
 	}
 
-	return ctx.Status(200).JSON(map[string]map[string]string{
-		"token": {
-			"jwt":     jwtTokenString,
-			"refresh": refreshTokenString,
-		},
-
-		"user": {
-			"username": registerData.Username,
-			"email":    registerData.Email,
-		},
+	return ctx.Status(200).JSON(map[string]string{
+		"accessToken":  accessTokenString,
+		"refreshToken": refreshTokenString,
+		"username":     registerData.Username,
+		"email":        registerData.Email,
 	})
 }
