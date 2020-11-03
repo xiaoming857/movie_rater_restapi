@@ -14,9 +14,12 @@ var db *sql.DB
 
 // Database setting
 const (
-	dbUser     = "test"
-	dbPassword = "Test@1234"
-	dbName     = "movie_rater"
+	dbUser     = "ARV134"
+	dbPassword = "123456"
+	dbName     = "ARV134"
+	dbProtocol = "tcp"
+	dbAddress  = "34.101.252.33"
+	dbPort     = "3306"
 )
 
 // Connect funtion
@@ -24,7 +27,7 @@ func connect() error {
 	var err error
 
 	// Use DSN string to open
-	db, err = sql.Open("mysql", dbUser+":"+dbPassword+"@/"+dbName)
+	db, err = sql.Open("mysql", dbUser+":"+dbPassword+"@"+dbProtocol+"("+dbAddress+":"+dbPort+")/"+dbName)
 	if err != nil {
 		return err
 	}
