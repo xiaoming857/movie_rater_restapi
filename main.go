@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
@@ -71,6 +72,6 @@ func main() {
 	// Routes
 	setupRoutes(app)
 
-	log.Fatalln(app.Listen(":8080"))
+	log.Fatalln(app.Listen(":" + os.Getenv("PORT")))
 	defer db.Close()
 }
