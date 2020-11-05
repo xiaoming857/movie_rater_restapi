@@ -5,6 +5,9 @@
 - MySQL
 - JWT
 
+### ERD
+![movie_rater_erd](./erd/movie_rater_erd.png)
+
 ### MySQL Setup
 ```mysql
 # Create User
