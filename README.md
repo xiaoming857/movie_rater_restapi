@@ -10,6 +10,7 @@
     > |Http Method    |Endpoint               |
     > |-              |-                      |
     > |POST           |/api/register          |
+    >
     > A public endpoint for registration. Requires JSON in the body which contains:
     > - username
     > - email
@@ -25,6 +26,7 @@
     > |Http Method    |Endpoint               |
     > |-              |-                      |
     > |POST           |/api/login             |
+    >
     > A public endpoint for login. Requires JSON in the body which contains:
     > - email
     > - password
@@ -39,6 +41,7 @@
     > |Http Method    |Endpoint               |
     > |-              |-                      |
     > |GET            |/api/refresh           |
+    >
     > A private endpoint that is used to authenticate user, it requires a refresh token in the header with bearer 'Bearer'. If the refresh token is valid, it will create new access and refresh tokens and return a JSON that contains:
     > - accessToken
     > - refreshToken
@@ -47,6 +50,7 @@
     > |Http Method    |Endpoint               |
     > |-              |-                      |
     > |GET            |/api/movies            |
+    >
     > A private endpoint that is used for getting list of movies from the database, it requires an access token in the header with bearer 'Bearer'. If the token is valid, it will return a list of JSONs. Each of the JSON contains:
     > - ID
     > - Title
@@ -56,6 +60,7 @@
     > |Http Method    |Endpoint               |
     > |-              |-                      |
     > |POST           |/api/movie             |
+    >
     > A private endpoint that is used for creating a movie, it requires an access token in the header with bearer 'Bearer' and a JSON in the body which contains:
     > - title
 
@@ -63,6 +68,7 @@
     > |Http Method    |Endpoint               |
     > |-              |-                      |
     > |GET            |/api/reviews/:id       |
+    >
     > A private endpoint that is used for getting list of reviews of a specific movie, it requires an access token in the header with bearer 'Bearer'. The :id section in the endpoint must be filled with a valid / existing movie id. It then will return a JSON that contains:
     > - ID
     > - Rating
@@ -73,13 +79,14 @@
     > |Http Method    |Endpoint               |
     > |-              |-                      |
     > |POST           |/api/review/:id        |
+    >
     > A private endpoint that is used to create a review, it requires an access token in the header with bearer 'Bearer' and a JSON in the body which contains:
     > - rating
     > - comment
     >
     > The :id section in the endpoint must be filled with a valid / existing movie id.
 
-### ER
+### ERD
 <img src="./erd/movie_rater_erd.png" style="zoom:80%;" />
 
 ### MySQL Setup
