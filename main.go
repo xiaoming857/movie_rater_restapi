@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"log"
-	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
@@ -28,7 +27,9 @@ func connect() error {
 	var err error
 
 	// Use DSN string to open
-	db, err = sql.Open("mysql", dbUser+":"+dbPassword+"@"+dbProtocol+"("+dbAddress+":"+dbPort+")/"+dbName)
+	// db, err = sql.Open("mysql", dbUser+":"+dbPassword+"@"+dbProtocol+"("+dbAddress+":"+dbPort+")/"+dbName)
+	db, err = sql.Open("mysql", "test:Test@1234@/movie_rater")
+
 	if err != nil {
 		return err
 	}
@@ -46,18 +47,18 @@ func setupRoutes(app *fiber.App) {
 
 	// Unrestricted routes
 	app.Get("/", Home)
-	app.Post("/login", Login)
-	app.Post("/register", Register)
+	app.Post("/api/login", Login)
+	app.Post("/api/register", Register)
 
 	// Restricted routes
-	app.Use("/refresh", RefreshProtected())
-	app.Get("/refresh", Refresh)
+	app.Use("/api/refresh", RefreshProtected())
+	app.Get("/api/refresh", Refresh)
 
 	app.Use(AccessProtected())
-	app.Get("/movies", GetMovies)
-	app.Get("/reviews/:id", GetReviews)
-	app.Post("/movie", AddMovie)
-	app.Post("/review/:id", AddReview)
+	app.Get("/api/movies", GetMovies)
+	app.Get("/api/reviews/:id", GetReviews)
+	app.Post("/api/movie", AddMovie)
+	app.Post("/api/review/:id", AddReview)
 }
 
 func main() {
@@ -72,6 +73,7 @@ func main() {
 	// Routes
 	setupRoutes(app)
 
-	log.Fatalln(app.Listen(":" + os.Getenv("PORT")))
+	// log.Fatalln(app.Listen(":" + os.Getenv("PORT")))
+	log.Fatalln(app.Listen(":8080"))
 	defer db.Close()
 }
