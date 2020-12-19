@@ -106,6 +106,7 @@ func AddMovie(ctx *fiber.Ctx) error {
 		})
 	}
 
+	// Validate movie title
 	if len(newMovie.Title) < 3 {
 		return ctx.Status(400).JSON(map[string]string{
 			"error": "Movie title too short (must be at least 3 characters)",

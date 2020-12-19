@@ -11,8 +11,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Secret key for access token
 var secretKey = []byte("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
 
+// Secret key for refresh token
 var refreshKey = []byte("Quisque sagittis purus sit amet volutpat consequat. Duis at consectetur lorem donec massa. Diam vel quam elementum pulvinar etiam.")
 
 // RegisterData struct
@@ -187,6 +189,7 @@ func Login(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(500)
 	}
 
+	// Create refresh token
 	refreshTokenString, err := generateRefreshToken(userID, username, userEmail)
 	if err != nil {
 		log.Println(err.Error())
@@ -306,6 +309,7 @@ func Register(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(500)
 	}
 
+	// Create refresh token
 	refreshTokenString, err := generateRefreshToken(userID, registerData.Username, registerData.Email)
 	if err != nil {
 		log.Println(err.Error())
