@@ -79,8 +79,8 @@
     >
     > The :id section in the endpoint must be filled with a valid / existing movie id.
 
-### ERD
-![movie_rater_erd](./erd/movie_rater_erd.png)
+### ER
+<img src="./erd/movie_rater_erd.png" style="zoom:80%;" />
 
 ### MySQL Setup
 ```mysql
