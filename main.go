@@ -28,7 +28,7 @@ func connect() error {
 
 	// Use DSN string to open
 	// db, err = sql.Open("mysql", dbUser+":"+dbPassword+"@"+dbProtocol+"("+dbAddress+":"+dbPort+")/"+dbName)
-	db, err = sql.Open("mysql", "test:Test@1234@/movie_rater")
+	db, err = sql.Open("mysql", "crazymin_test:CEGdDe7Kt7ydQec@/crazymin_movie_rater")
 
 	if err != nil {
 		return err
